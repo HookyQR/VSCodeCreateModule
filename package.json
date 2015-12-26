@@ -8,10 +8,11 @@
 		"vscode": "^0.10.1"
 	},
 	"categories": [
-		"Other"
+		"Other","Languages"
 	],
 	"activationEvents": [
-		"onLanguage:javascript"
+		"onLanguage:javascript",
+		"onCommand:HookyQR.CreateModule"
 	],
 	"icon":"icon.svg",
 	"galleryBanner": {
