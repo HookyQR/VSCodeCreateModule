@@ -13,6 +13,11 @@
 	"activationEvents": [
 		"onLanguage:javascript"
 	],
+	"icon":"icon.svg",
+	"galleryBanner": {
+		"color": "#e8e030",
+		"theme": "light"
+	},
 	"license": "MIT",
 	"main": "./extension",
 	"contributes": {
@@ -329,9 +334,9 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/HookyQR/VSCodeModuleLinks"
+		"url": "https://github.com/HookyQR/VSCodeCreateModule"
 	},
 	"bugs": {
-		"url": "https://github.com/HookyQR/VSCodeModuleLinks/issues"
+		"url": "https://github.com/HookyQR/VSCodeCreateModule/issues"
 	}
 }
