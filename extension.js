@@ -1,17 +1,19 @@
 "use strict";
-var vscode = require('vscode');
-var nodeResolve = require('nodeResolve');
-var os = require('os');
-var path = require('path');
-var fs = require('fs');
+let vscode = require('vscode');
+let nodeResolve = require('nodeResolve');
+let os = require('os');
+let path = require('path');
+let fs = require('fs');
 
-var cmdOpen = (os.platform() === 'darwin' ? "Cmd" : "Ctrl") + " + click to open";
-var nodeRequireDecoration = vscode.window.createTextEditorDecorationType({
+let cmdOpen = (os.platform() === 'darwin' ? "Cmd" : "Ctrl") + " + click to open";
+let nodeRequireDecoration = vscode.window.createTextEditorDecorationType({
 	textDecoration: 'underline',
 	color: '#0000ff'
 });
 
 function setDecoration(editor, nodeRequire) {
+	//make sure it's still one of our docs
+
 	let hovers = nodeRequire.elements.filter(element => element.target)
 		.map(element => {
 			let start = editor.document.positionAt(element.start);
@@ -31,11 +33,8 @@ function NodeRequire(text) {
 NodeRequire.prototype.updateLocations = function(text) {
 	this.elements = nodeResolve.findAll(text);
 };
-NodeRequire.prototype.setLens = function(disposable) {
-	this.lens = disposable;
-};
 NodeRequire.prototype.resolveAll = function(baseName) {
-	var promises = this.elements.map(element => {
+	let promises = this.elements.map(element => {
 		return new Promise(resolve => {
 			element.target = nodeResolve.resolve(element.name, baseName);
 			if (!element.target) element.target = false;
@@ -51,7 +50,7 @@ NodeRequire.prototype.resolveAll = function(baseName) {
 
 NodeRequire.prototype.getAbsoluteName = function(posn) {
 	return new Promise(resolve => {
-		var choice = null;
+		let choice = null;
 		this.elements.some(el => {
 			if (el.start > posn) return true;
 			choice = el;
@@ -61,22 +60,22 @@ NodeRequire.prototype.getAbsoluteName = function(posn) {
 		resolve();
 	});
 };
-var nodeObjects = {};
+let nodeObjects = {};
 
 function filterToValidNode(editor) {
-	if (!editor) return;
 	if (editor.document.languageId !== 'javascript') return;
 	return true;
 }
-var nodeNewProvider = {
+
+let nodeNewProvider = {
 	provideCodeLenses: function(doc) {
-		var nreq = nodeObjects[doc.fileName];
+		let nreq = nodeObjects[doc.fileName];
 		if (!nreq || !nreq.elements) return;
-		var lensed = nreq.elements.filter(elem => elem.target === false);
-		var rtn = lensed.map(elem => {
+		let lensed = nreq.elements.filter(elem => elem.target === false);
+		let rtn = lensed.map(elem => {
 			let start = doc.positionAt(elem.start);
 			let end = doc.positionAt(elem.start + elem.name.length);
-			var title;
+			let title;
 			if (elem.name.startsWith("../") || elem.name.startsWith('./') ||
 				path.isAbsolute(elem.name)) {
 				title = "Create missing module file: '" + elem.name;
@@ -94,44 +93,27 @@ var nodeNewProvider = {
 	}
 };
 
-function setLensIfRequired(fName) {
-	//if any of the elements are null, we provide a code lense
-	//at anytime we can destroy this and bring up another
-	var nreq = nodeObjects[fName];
-	if (!nreq || nreq.lens) return;
-	var needLens = nreq.elements.some(elem => elem.target === false);
-	if (!needLens) return;
-	nreq.setLens(vscode.languages.registerCodeLensProvider('javascript', nodeNewProvider));
-}
-
-function resetLens(fName) {
-	if (!fName) return;
-	if (!nodeObjects[fName]) return;
-	if (nodeObjects[fName].lens) {
-		nodeObjects[fName].lens.dispose();
-		delete nodeObjects[fName].lens;
-	}
-	setLensIfRequired(fName);
-}
-
 function setNodeRequire(editor) {
-	if (!filterToValidNode(editor)) return;
-	var text = editor.document.getText();
-	var nreq = nodeObjects[editor.document.fileName];
+
+	if (!editor) return;
+	if (!filterToValidNode(editor)) {
+		return editor.setDecorations(nodeRequireDecoration, []);
+	}
+	let text = editor.document.getText();
+	let nreq = nodeObjects[editor.document.fileName];
 	if (!nreq) nreq = nodeObjects[editor.document.fileName] = new NodeRequire(text);
 	else nreq.updateLocations(text);
 
 	nreq.resolveAll(editor.document.fileName)
-		.then(() => setDecoration(editor, nreq))
-		.then(() => setLensIfRequired(editor.document.fileName));
+		.then(() => setDecoration(editor, nreq));
 }
 
 function dropNodeRequire(document) {
 	delete nodeObjects[document.fileName];
 }
-var nodeProvider = {
+let nodeProvider = {
 	provideDefinition: function(doc, posn) {
-		var nodeSet = nodeObjects[doc.fileName];
+		let nodeSet = nodeObjects[doc.fileName];
 		if (!nodeSet) return;
 		return nodeSet.getAbsoluteName(doc.offsetAt(posn))
 			.then(target => {
@@ -142,7 +124,7 @@ var nodeProvider = {
 	}
 };
 
-var changeTimer = 0;
+let changeTimer = 0;
 
 function fileExists(name) {
 	return new Promise((resolve, reject) => {
@@ -170,7 +152,7 @@ function ensureDir(name) {
 		.then(exists => {
 			if (exists === 'dir') return name;
 			if (!exists) return mkDir(name);
-			var e = new Error("Not a directory at: " + name);
+			let e = new Error("Not a directory at: " + name);
 			e.code = "EEXIST";
 			throw e;
 		});
@@ -181,7 +163,7 @@ function mkNewFile(name, data) {
 	return fileExists(name)
 		.then(isFile => {
 			if (isFile) {
-				var e = new Error(name + " already exists.");
+				let e = new Error(name + " already exists.");
 				e.code = "EEXIST";
 				throw e;
 			}
@@ -201,7 +183,7 @@ function autoJSName(name) {
 
 function pretty(obj, deep) {
 	deep = deep || 0;
-	var t = "";
+	let t = "";
 	for (let i = 0; i < deep; i++) {
 		t += "\t";
 	}
@@ -214,10 +196,10 @@ function pretty(obj, deep) {
 	if (typeof obj === 'string') return '"' + obj + '"';
 	if (typeof obj === 'number') return obj.toString;
 	if (typeof obj === 'boolean') return obj ? "true" : "false";
-	if (typeof obj !== 'object') return '""';//what ever this is, we're not dealing with it
-	var keys = Object.keys(obj);
+	if (typeof obj !== 'object') return '""'; //what ever this is, we're not dealing with it
+	let keys = Object.keys(obj);
 	if (keys.length === 0) return "{}\n";
-	var strs = keys.map(a => '"' + a + '": ' + pretty(obj[a], deep + 1));
+	let strs = keys.map(a => '"' + a + '": ' + pretty(obj[a], deep + 1));
 	return "{\n\t" + strs.join(",\n\t" + t) + "\n" + t + "}\n";
 }
 
@@ -233,10 +215,9 @@ function doCreateModule(name) {
 		//show error
 		return;
 	}
-	var sourceEditor = vscode.window.activeTextEditor;
-	var baseName = path.dirname(vscode.window.activeTextEditor.document.fileName);
+	let baseName = path.dirname(vscode.window.activeTextEditor.document.fileName);
 
-	var prom = Promise.resolve(name);
+	let prom = Promise.resolve(name);
 	if (!name) {
 		//setting prom straight to the result of the vscode call doesn't work
 		//it complains later about the exception not being caught. (if there is one)
@@ -246,104 +227,103 @@ function doCreateModule(name) {
 		}));
 	}
 	return prom.then(name => {
-			if (!name) return;
-			if (name.startsWith("./") || name.startsWith("../")) {
-				//create locally.
-				name = autoJSName(name);
-				name = baseName + path.sep + name;
-				return mkNewFile(name);
-			}
-			//node mod must be valid
-			baseName += path.sep + "node_modules";
-			var cfg = vscode.workspace.getConfiguration('CreateModule');
-			return ensureDir(baseName)
-				.then(() => {
-					//how should we make it? false,true,'index'
-					if (name.endsWith('.js') || name.endsWith('.json') || name.endsWith('.node')) {
-						return "file";
-					}
-					if (cfg.packageType === 'ask') {
-						var choices = [{
-							label: "With package.json",
-							description: "Create as a full package. Default package info can be set in your user/workspace settings.",
-							value: "package"
+		if (!name) return;
+		if (name.startsWith("./") || name.startsWith("../")) {
+			//create locally.
+			name = autoJSName(name);
+			name = baseName + path.sep + name;
+			return mkNewFile(name);
+		}
+		//node mod must be valid
+		baseName += path.sep + "node_modules";
+		let cfg = vscode.workspace.getConfiguration('CreateModule');
+		return ensureDir(baseName)
+			.then(() => {
+				//how should we make it? false,true,'index'
+				if (name.endsWith('.js') || name.endsWith('.json') || name.endsWith('.node')) {
+					return "file";
+				}
+				if (cfg.packageType === 'ask') {
+					let choices = [{
+						label: "With package.json",
+						description: "Create as a full package. Default package info can be set in your user/workspace settings.",
+						value: "package"
 										}, {
-							label: "With index.js",
-							description: "Create as a package, but with no package.json.",
-							value: "index"
+						label: "With index.js",
+						description: "Create as a package, but with no package.json.",
+						value: "index"
 										}, {
-							label: name + ".js",
-							description: "Create as a file only.",
-							value: "file"
+						label: name + ".js",
+						description: "Create as a file only.",
+						value: "file"
 										}];
-						return vscode.window.showQuickPick(choices, {
-								matchOnDescription: true,
-								placeHolder: "Please choose the type of creation you would like"
-							})
-							.then(choice => choice.value);
-					}
-					return cfg.packageType;
-				})
-				.then(type => {
-					if (type === 'file') {
-						name = autoJSName(name);
-						return mkNewFile(baseName + path.sep + name);
-					}
-					baseName += path.sep + name;
-					//at this point, if the directory exists, it's bad
-					return fileExists(baseName)
-						.then(exists => {
-							if (exists) {
-								var e = new Error("Target output already exists: " + baseName);
-								e.code = "EEXIST";
-								throw e;
-							}
+					return vscode.window.showQuickPick(choices, {
+							matchOnDescription: true,
+							placeHolder: "Please choose the type of creation you would like"
 						})
-						.then(() => mkDir(baseName))
-						.then(() => {
-							if (type === "index") {
-								return mkNewFile(baseName + path.sep + "index.js");
-							}
-							var pkg = cfg.packageDefaults;
-							for (let a in pkg) {
-								pkg[a] = pkg[a].replace(/\[name\]/g, name);
-							}
-							if (!pkg.main) pkg.main = 'index.js';
-							//create the package file
-							return mkNewFile(baseName + path.sep + "package.json", pretty(pkg))
-								.then(pkgFile => {
-									var mainFilePaths = pkg.main.split('/'); //it's not the path.sep here
-									var tail = mainFilePaths.pop();
-									tail = autoJSName(tail);
-									var finalPoint = Promise.resolve(baseName);
-									mainFilePaths.forEach(segment => {
-										finalPoint = finalPoint.then(currentPath => ensureDir(currentPath + path.sep + segment));
-									});
-									return finalPoint.then(finalDir => mkNewFile(finalDir + path.sep + tail))
-										.then(outFile => [pkgFile, outFile]);
+						.then(choice => choice.value);
+				}
+				return cfg.packageType;
+			})
+			.then(type => {
+				if (type === 'file') {
+					name = autoJSName(name);
+					return mkNewFile(baseName + path.sep + name);
+				}
+				baseName += path.sep + name;
+				//at this point, if the directory exists, it's bad
+				return fileExists(baseName)
+					.then(exists => {
+						if (exists) {
+							let e = new Error("Target output already exists: " + baseName);
+							e.code = "EEXIST";
+							throw e;
+						}
+					})
+					.then(() => mkDir(baseName))
+					.then(() => {
+						if (type === "index") {
+							return mkNewFile(baseName + path.sep + "index.js");
+						}
+						let pkg = cfg.packageDefaults;
+						for (let a in pkg) {
+							pkg[a] = pkg[a].replace(/\[name\]/g, name);
+						}
+						if (!pkg.main) pkg.main = 'index.js';
+						//create the package file
+						return mkNewFile(baseName + path.sep + "package.json", pretty(pkg))
+							.then(pkgFile => {
+								let mainFilePaths = pkg.main.split('/'); //it's not the path.sep here
+								let tail = mainFilePaths.pop();
+								tail = autoJSName(tail);
+								let finalPoint = Promise.resolve(baseName);
+								mainFilePaths.forEach(segment => {
+									finalPoint = finalPoint.then(currentPath => ensureDir(currentPath + path.sep + segment));
 								});
-						});
-				});
-		})
-		.then(files => {
+								return finalPoint.then(finalDir => mkNewFile(finalDir + path.sep + tail))
+									.then(outFile => [pkgFile, outFile]);
+							});
+					});
+			});
+	})
+
+	.then(files => {
 			if (!files) return;
 			//at this point, I have the files
 			if (typeof files === "string") files = [files];
-			if (sourceEditor) resetLens(sourceEditor.document.fileName);
 			//now open the created files
 			//the text editors aren't stored in any particular order,
 			//so we just open in number 1 and 2 and be happy with that.
-			var pos = 0;
+			let pos = 0;
 			//we don't care about any of the errors in here,
 			//but if we don't 'catch' them, they make a mess
 			files.forEach(f => {
 				vscode.workspace.openTextDocument(f)
 					.then(doc => {
 						vscode.window.showTextDocument(doc, 1 + (pos % 3))
-							.then(() => {}, () => {});
+							.then(setNodeRequire, () => {});
 						pos++;
-					})
-					.then(() => {}, () => {});
+					}, () => {});
 			});
 		})
 		.catch(error => {
@@ -353,6 +333,7 @@ function doCreateModule(name) {
 }
 
 function activate(context) {
+	//call on all active editors first
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		setNodeRequire(editor);
 	});
@@ -362,15 +343,18 @@ function activate(context) {
 		if (changeTimer) clearTimeout(changeTimer);
 		changeTimer = setTimeout(() => setNodeRequire(vscode.window.activeTextEditor), 200);
 	});
-	vscode.workspace.onDidOpenTextDocument(() => {
-		setNodeRequire(vscode.window.activeTextEditor);
+	vscode.workspace.onDidOpenTextDocument(doc => {
+		//only run it if it's in an editor
+		vscode.window.visibleTextEditors.filter(editor=>editor.document === doc).forEach(setNodeRequire);
 	});
 	vscode.workspace.onDidCloseTextDocument(document => {
 		dropNodeRequire(document);
 	});
-	var prov = vscode.languages.registerDefinitionProvider("javascript", nodeProvider);
+	let prov = vscode.languages.registerDefinitionProvider("javascript", nodeProvider);
 	context.subscriptions.push(prov);
 	prov = vscode.commands.registerCommand('HookyQR.CreateModule', doCreateModule);
+	context.subscriptions.push(prov);
+	prov = vscode.languages.registerCodeLensProvider('javascript', nodeNewProvider);
 	context.subscriptions.push(prov);
 }
 exports.activate = activate;

@@ -37,6 +37,13 @@ At the first level of `packageDefaults` you can use the string `[name]` to speci
 
 
 ## Known issues:
-* Occasionally trigger a VS Code error: <br>
+* Occasionally triggers a VS Code error: <br>
 	`Unable to open 'package.json': Unable to open the file because the associated text model is undefined..`<br>
 	Doesn't affect the file creation, just opening.
+
+
+## Changes:
+### 0.0.2: 30 Dec 2015
+* Improved codeLens handling. No longer duplicates creation suggestions.
+* Improved rendering on first load. Previously only the active file would display the codeLens correctly.
+* Improved error handling. VS Code error trigger is now unlikely. (Please let us know if you still get it.)
