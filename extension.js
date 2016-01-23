@@ -8,7 +8,8 @@ let fs = require('fs');
 let cmdOpen = (os.platform() === 'darwin' ? "Cmd" : "Ctrl") + " + click to open";
 let nodeRequireDecoration = vscode.window.createTextEditorDecorationType({
 	textDecoration: 'underline',
-	color: '#0000ff'
+	color: '#0000ff',
+	dark:{color:'#4E94CE'}
 });
 
 function setDecoration(editor, nodeRequire) {
@@ -73,6 +74,8 @@ let nodeNewProvider = {
 		if (!nreq || !nreq.elements) return;
 		let lensed = nreq.elements.filter(elem => elem.target === false);
 		let rtn = lensed.map(elem => {
+			//ignore ., ./, .., ../
+			if ( '../'.includes(elem.name)) return;
 			let start = doc.positionAt(elem.start);
 			let end = doc.positionAt(elem.start + elem.name.length);
 			let title;
@@ -89,7 +92,7 @@ let nodeNewProvider = {
 				arguments: [elem.name]
 			});
 		});
-		return rtn;
+		return rtn.filter(lens=>lens);
 	}
 };
 

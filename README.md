@@ -34,16 +34,22 @@ At the first level of `packageDefaults` you can use the string `[name]` to speci
 - If `{new_module}` is an absolute or relative path, the file will be created there. (The same way node would look for it)
 - If `{new_module}` ends in one of the valid extension (`.js`,`.json`,`.node`) the `"file"` mode will always be used.
 - Omission of an extension (for a pathed, or `"file"` mode creation) will cause `.js` to be added.
+- `. .. ./ and ../` are ignored when provided on their own in a require call.
 
 
 ## Known issues:
 * Occasionally triggers a VS Code error: <br>
-	`Unable to open 'package.json': Unable to open the file because the associated text model is undefined..`<br>
+	`Unable to open 'package.json': Unable to open the file because the associated text model is undefined.`<br>
 	Doesn't affect the file creation, just opening.
 
 
 ## Changes:
+### 0.0.3: 23 Jan 2016
+* Improve readability in dark themes. Link color is set to the same as the default vs-dark theme. (#4E94CE) [Issue #1 Please remove blue color](https://github.com/HookyQR/VSCodeCreateModule/issues/1)
+* Added ignoring of `. .. ./ ../` for link and generation display.
+
 ### 0.0.2: 30 Dec 2015
 * Improved codeLens handling. No longer duplicates creation suggestions.
 * Improved rendering on first load. Previously only the active file would display the codeLens correctly.
 * Improved error handling. VS Code error trigger is now unlikely. (Please let us know if you still get it.)
+
