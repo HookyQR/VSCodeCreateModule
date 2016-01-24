@@ -6,10 +6,9 @@ let path = require('path');
 let fs = require('fs');
 
 let cmdOpen = (os.platform() === 'darwin' ? "Cmd" : "Ctrl") + " + click to open";
+//only do underline now. See issue #1.
 let nodeRequireDecoration = vscode.window.createTextEditorDecorationType({
-	textDecoration: 'underline',
-	color: '#0000ff',
-	dark:{color:'#4E94CE'}
+	textDecoration: 'underline'
 });
 
 function setDecoration(editor, nodeRequire) {

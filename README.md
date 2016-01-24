@@ -32,9 +32,9 @@ At the first level of `packageDefaults` you can use the string `[name]` to speci
 
 ### Special cases
 - If `{new_module}` is an absolute or relative path, the file will be created there. (The same way node would look for it)
-- If `{new_module}` ends in one of the valid extension (`.js`,`.json`,`.node`) the `"file"` mode will always be used.
+- If `{new_module}` ends in one of the valid extension (`.js`, `.json`, `.node`) the `"file"` mode will always be used.
 - Omission of an extension (for a pathed, or `"file"` mode creation) will cause `.js` to be added.
-- `. .. ./ and ../` are ignored when provided on their own in a require call.
+- `. .. ./ and ../` are ignored when provided on their own in a require call. (Stops early suggestion to create bogus modules.)
 
 
 ## Known issues:
@@ -44,9 +44,12 @@ At the first level of `packageDefaults` you can use the string `[name]` to speci
 
 
 ## Changes:
+### 0.0.4: 25 Jan 2016
+* Drop color change completely. Fixes [Issue #1 Please remove blue color](https://github.com/HookyQR/VSCodeCreateModule/issues/1)
+
 ### 0.0.3: 23 Jan 2016
 * Improve readability in dark themes. Link color is set to the same as the default vs-dark theme. (#4E94CE) [Issue #1 Please remove blue color](https://github.com/HookyQR/VSCodeCreateModule/issues/1)
-* Added ignoring of `. .. ./ ../` for link and generation display.
+* Added ignoring of `. .. ./ ../` for link and generation display. (When that is the only path provided.)
 
 ### 0.0.2: 30 Dec 2015
 * Improved codeLens handling. No longer duplicates creation suggestions.
