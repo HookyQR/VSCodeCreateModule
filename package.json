@@ -2,7 +2,7 @@
 	"name": "CreateModule",
 	"displayName": "Node Module Creator and Viewer",
 	"description": "Open or create referenced modules directly from source.",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"publisher": "HookyQR",
 	"engines": {
 		"vscode": "^0.10.1"
@@ -288,10 +288,15 @@
 			},
 			"properties": {
 				"CreateModule.packageType": {
-					"type": ["string"],
+					"type": "string",
 					"default": "package",
 					"enum": ["file", "package", "index", "ask"],
 					"description": "Make packages as: just a file, with package.json, with index.js, or ask each time."
+				},
+				"CreateModule.supportES6modules": {
+					"type": "boolean",
+					"default":false,
+					"description": "Support create and link for ES6 import semantics" 
 				},
 				"CreateModule.packageDefaults": {
 					"type": "object",

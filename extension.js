@@ -27,16 +27,17 @@ function setDecoration(editor, nodeRequire) {
 	editor.setDecorations(nodeRequireDecoration, hovers);
 }
 
-function NodeRequire(text) {
-	this.elements = nodeResolve.findAll(text);
+function NodeRequire(text, es6) {
+	this.es6 = es6;
+	this.elements = nodeResolve.findAll(text, es6);
 }
 NodeRequire.prototype.updateLocations = function(text) {
-	this.elements = nodeResolve.findAll(text);
+	this.elements = nodeResolve.findAll(text, this.es6);
 };
 NodeRequire.prototype.resolveAll = function(baseName) {
 	let promises = this.elements.map(element => {
 		return new Promise(resolve => {
-			element.target = nodeResolve.resolve(element.name, baseName);
+			element.target = nodeResolve.resolve(element.name, baseName, element.type === 'es6');
 			if (!element.target) element.target = false;
 			resolve();
 		});
@@ -74,11 +75,11 @@ let nodeNewProvider = {
 		let lensed = nreq.elements.filter(elem => elem.target === false);
 		let rtn = lensed.map(elem => {
 			//ignore ., ./, .., ../
-			if ( '../'.includes(elem.name)) return;
+			if ('../'.includes(elem.name)) return;
 			let start = doc.positionAt(elem.start);
 			let end = doc.positionAt(elem.start + elem.name.length);
 			let title;
-			if (elem.name.startsWith("../") || elem.name.startsWith('./') ||
+			if (elem.type === 'es6' || elem.name.startsWith("../") || elem.name.startsWith('./') ||
 				path.isAbsolute(elem.name)) {
 				title = "Create missing module file: '" + elem.name;
 				if (!elem.name.endsWith('.js')) title += ".js";
@@ -88,22 +89,22 @@ let nodeNewProvider = {
 			return new vscode.CodeLens(new vscode.Range(start, end), {
 				title: title,
 				command: "HookyQR.CreateModule",
-				arguments: [elem.name]
+				arguments: [elem.name,elem.type]
 			});
 		});
-		return rtn.filter(lens=>lens);
+		return rtn.filter(lens => lens);
 	}
 };
 
 function setNodeRequire(editor) {
-
 	if (!editor) return;
 	if (!filterToValidNode(editor)) {
 		return editor.setDecorations(nodeRequireDecoration, []);
 	}
-	let text = editor.document.getText();
+	const cfg = vscode.workspace.getConfiguration('CreateModule');
+	const text = editor.document.getText();
 	let nreq = nodeObjects[editor.document.fileName];
-	if (!nreq) nreq = nodeObjects[editor.document.fileName] = new NodeRequire(text);
+	if (!nreq) nreq = nodeObjects[editor.document.fileName] = new NodeRequire(text, cfg.supportES6modules);
 	else nreq.updateLocations(text);
 
 	nreq.resolveAll(editor.document.fileName)
@@ -205,9 +206,12 @@ function pretty(obj, deep) {
 	return "{\n\t" + strs.join(",\n\t" + t) + "\n" + t + "}\n";
 }
 
-function doCreateModule(name) {
+function doCreateModule(name, es6) {
 	//if name is a context, we need to get an input
-	if (Array.isArray(name)) name = name[0];
+	if (Array.isArray(name)) {
+		name = name[0];
+		es6 = name[1];
+	}
 	if (typeof name !== 'string') name = null;
 	if (!vscode.window.activeTextEditor) {
 		//show error
@@ -221,6 +225,8 @@ function doCreateModule(name) {
 
 	let prom = Promise.resolve(name);
 	if (!name) {
+		//es6 creation must have the .js extension added manually.
+		es6 = false;
 		//setting prom straight to the result of the vscode call doesn't work
 		//it complains later about the exception not being caught. (if there is one)
 		prom = prom.then(() => vscode.window.showInputBox({
@@ -230,7 +236,7 @@ function doCreateModule(name) {
 	}
 	return prom.then(name => {
 		if (!name) return;
-		if (name.startsWith("./") || name.startsWith("../")) {
+		if (es6 || name.startsWith("./") || name.startsWith("../")) {
 			//create locally.
 			name = autoJSName(name);
 			name = baseName + path.sep + name;
@@ -334,11 +340,15 @@ function doCreateModule(name) {
 		});
 }
 
+function updateES6(es6) {
+	for (let a in nodeObjects) nodeObjects[a].es6 = es6;
+	vscode.window.visibleTextEditors.forEach(setNodeRequire);
+	vscode.window.visibleTextEditors.forEach(editor => console.log(editor.document.fileName));
+}
+
 function activate(context) {
 	//call on all active editors first
-	vscode.window.onDidChangeActiveTextEditor(editor => {
-		setNodeRequire(editor);
-	});
+	vscode.window.onDidChangeActiveTextEditor(setNodeRequire);
 
 	vscode.workspace.onDidChangeTextDocument(() => {
 		//put this on a time delay
@@ -347,11 +357,15 @@ function activate(context) {
 	});
 	vscode.workspace.onDidOpenTextDocument(doc => {
 		//only run it if it's in an editor
-		vscode.window.visibleTextEditors.filter(editor=>editor.document === doc).forEach(setNodeRequire);
+		vscode.window.visibleTextEditors.filter(editor => editor.document === doc)
+			.forEach(setNodeRequire);
 	});
-	vscode.workspace.onDidCloseTextDocument(document => {
-		dropNodeRequire(document);
+	vscode.workspace.onDidChangeConfiguration(() => {
+		const es6 = vscode.workspace.getConfiguration("CreateModule")
+			.supportES6modules;
+		updateES6(es6);
 	});
+	vscode.workspace.onDidCloseTextDocument(dropNodeRequire);
 	let prov = vscode.languages.registerDefinitionProvider("javascript", nodeProvider);
 	context.subscriptions.push(prov);
 	prov = vscode.commands.registerCommand('HookyQR.CreateModule', doCreateModule);

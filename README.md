@@ -13,6 +13,8 @@ The default options for this extension are as follows:
 ```json
 "CreateModule.packageType": "package",
 
+"CreateModule.supportES6modules": false,
+
 "CreateModule.packageDefaults": {
 		"name": "[name]",
 		"version": "0.0.1",
@@ -27,12 +29,20 @@ The default options for this extension are as follows:
 - `"file"`: Just create a file named `{new_module}.js` in the node_modules folder.
 - `"ask"`: Open a dialog and ask for one of the options above.
 
+Set `supportES6modules` boolean flag to `true` to also provide creation of `.js` extended files (and links to existing files) from lines such as:
+```javascript
+import abc from "abc";
+import * from 'lib/xyz';
+import {sum, pi} from "lib/math";
+```
+
 `packageDefaults` can have any fields available in a standard node `package.json` file.
 At the first level of `packageDefaults` you can use the string `[name]` to specify where you want the new module's name to be entered.
 
 ### Special cases
 - If `{new_module}` is an absolute or relative path, the file will be created there. (The same way node would look for it)
 - If `{new_module}` ends in one of the valid extension (`.js`, `.json`, `.node`) the `"file"` mode will always be used.
+- Creation from an ES6 style import will always create a file rather than a node package.
 - Omission of an extension (for a pathed, or `"file"` mode creation) will cause `.js` to be added.
 - `. .. ./ and ../` are ignored when provided on their own in a require call. (Stops early suggestion to create bogus modules.)
 
@@ -44,6 +54,9 @@ At the first level of `packageDefaults` you can use the string `[name]` to speci
 
 
 ## Changes:
+### 0.0.5: 25 Jan 2016
+* Optionally support ES6 module `import` key word. Fixes [Issue #3 ES6 imports support](https://github.com/HookyQR/VSCodeCreateModule/issues/3)
+
 ### 0.0.4: 25 Jan 2016
 * Drop color change completely. Fixes [Issue #1 Please remove blue color](https://github.com/HookyQR/VSCodeCreateModule/issues/1)
 
